@@ -11,10 +11,21 @@ use Illuminate\Support\Facades\Log;
 
 class WeaponController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $weapons = Weapon::all();
-        return Inertia::render('Dashboard', ['weapons' => $weapons]);
+        $search = $request->input('search');
+
+        $weapons = Weapon::when($search, function ($query, $search) {
+            return $query->where('applicant_name', 'like', "%{$search}%")
+                ->orWhere('cnic', 'like', "%{$search}%")
+                ->orWhere('license_no', 'like', "%{$search}%")
+                ->orWhere('weapon_type', 'like', "%{$search}%");
+        })->get();
+
+        return inertia('Dashboard', [
+            'weapons' => $weapons,
+            'searchQuery' => $search
+        ]);
     }
 
     public function create()
@@ -99,10 +110,9 @@ class WeaponController extends Controller
         ]);
 
         $weapons = Weapon::where('cnic', $request->cnic)->get();
-        return response()->json([
-            'success' => true,
-            'message' => 'Weapons retrieved successfully.',
-            'data' => $weapons,
-        ], 200);
+
+        return Inertia::render('Home', [
+            'weapons' => $weapons->isEmpty() ? [] : $weapons,
+        ]);
     }
 }

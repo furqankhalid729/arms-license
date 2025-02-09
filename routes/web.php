@@ -9,6 +9,10 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return Inertia::render('Home');
 });
+Route::get('/search-cnic', function () {
+    return Inertia::render('Home');
+});
+Route::post('/search-cnic', [WeaponController::class, 'searchCNIC'])->name('cnic');
 
 
 Route::middleware(['auth', 'verified'])->group(function () {

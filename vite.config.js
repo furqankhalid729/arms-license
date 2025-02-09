@@ -10,10 +10,10 @@ export default defineConfig({
         }),
         react(),
     ],
-    server: {
-        https: true, // Ensure HTTPS
-        hmr: {
-            protocol: 'wss', // WebSocket Secure for hot reload
-        },
-    },
+    // server: {
+    //     https: true, // Ensure HTTPS
+    //     hmr: {
+    //         protocol: 'wss', // WebSocket Secure for hot reload
+    //     },
+    // },
 });

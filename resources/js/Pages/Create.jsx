@@ -6,7 +6,7 @@ export default function CreateWeapon() {
     const { data, setData, post, progress } = useForm({
         applicant_name: '',
         father_name: '',
-        cnic:'',
+        cnic: '',
         license_no: '',
         weapon_type: '',
         caliber: '',
@@ -68,6 +68,7 @@ export default function CreateWeapon() {
                                         onChange={(e) => setData(key, e.target.value)}
                                         className="w-full rounded-md border p-2"
                                         required
+                                        autoComplete="bday"
                                     />
                                     {errors[key] && (
                                         <div className="text-red-500 text-sm">{errors[key]}</div>
@@ -82,6 +83,27 @@ export default function CreateWeapon() {
                                         placeholder={key.replace('_', ' ')}
                                         className="w-full rounded-md border p-2"
                                         required
+                                        autoComplete={
+                                            key === 'applicant_name'
+                                                ? 'name'
+                                                : key === 'father_name'
+                                                    ? 'additional-name'
+                                                    : key === 'cnic'
+                                                        ? 'off'
+                                                        : key === 'license_no'
+                                                            ? 'off'
+                                                            : key === 'weapon_type'
+                                                                ? 'off'
+                                                                : key === 'caliber'
+                                                                    ? 'off'
+                                                                    : key === 'weapon_no'
+                                                                        ? 'off'
+                                                                        : key === 'cartridges'
+                                                                            ? 'off'
+                                                                            : key === 'status'
+                                                                                ? 'off'
+                                                                                : 'off'
+                                        }
                                     />
                                     {errors[key] && (
                                         <div className="text-red-500 text-sm">{errors[key]}</div>

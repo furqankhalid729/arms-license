@@ -1,11 +1,20 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 
-export default function Dashboard({ weapons }) {
+export default function Dashboard({ weapons, searchQuery }) {
+    const { data, setData, get } = useForm({
+        search: searchQuery || '', // Preserve search query if available
+    });
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        get(route('dashboard', { search: data.search })); // Fetch filtered data
+    };
+
     const handleDelete = (id) => {
         if (!confirm('Are you sure you want to delete this record?')) return;
 
-        router.get(`/api/weapons/${id}`, {
+        router.delete(`/weapons/${id}`, {
             preserveScroll: true,
             onSuccess: () => {
                 setWeapons(weapons.filter((weapon) => weapon.id !== id));
@@ -15,7 +24,7 @@ export default function Dashboard({ weapons }) {
             },
         });
     };
-    console.log(weapons);
+
     return (
         <AuthenticatedLayout
             header={
@@ -26,7 +35,25 @@ export default function Dashboard({ weapons }) {
         >
             <Head title="Dashboard" />
             <div className="mx-auto my-10 max-w-7xl space-y-4 rounded-md bg-white p-6 shadow-lg">
-                <div className="flex justify-end">
+                {/* Search Form & Add Button */}
+                <div className="flex items-center justify-between">
+                    <form onSubmit={handleSearch} className="flex space-x-2">
+                        <input
+                            type="text"
+                            name="search"
+                            value={data.search}
+                            onChange={(e) => setData('search', e.target.value)}
+                            placeholder="Search weapons..."
+                            className="w-72 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        />
+                        <button
+                            type="submit"
+                            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                            Search
+                        </button>
+                    </form>
+
                     <Link
                         href={route('weapons.create')}
                         className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -34,6 +61,8 @@ export default function Dashboard({ weapons }) {
                         Add Weapon
                     </Link>
                 </div>
+
+                {/* Weapons Table */}
                 {weapons.length === 0 ? (
                     <p className="mt-4 text-center text-gray-500">
                         No weapon records found.
