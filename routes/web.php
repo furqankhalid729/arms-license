@@ -9,17 +9,17 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return Inertia::render('Home');
 });
-Route::get('/search-cnic', function () {
-    return Inertia::render('Home');
-});
-Route::post('/search-cnic', [WeaponController::class, 'searchCNIC'])->name('cnic');
+// Route::get('/search-cnic', function () {
+//     return Inertia::render('Home');
+// });
+Route::get('/search-cnic', [WeaponController::class, 'searchCNIC'])->name('cnic');
 
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [WeaponController::class, 'index'])->name('dashboard');
-    Route::get('/weapons/create', [WeaponController::class, 'create'])->name('weapons.create');
-    Route::get('/weapons/{weapon}/edit', [WeaponController::class, 'edit'])->name('weapons.edit');
-    Route::put('/weapons/{weapon}', [WeaponController::class, 'update'])->name('weapons.update');
+    Route::get('/driver/create', [WeaponController::class, 'create'])->name('weapons.create');
+    Route::get('/driver/{weapon}/edit', [WeaponController::class, 'edit'])->name('weapons.edit');
+    Route::put('/driver/{weapon}', [WeaponController::class, 'update'])->name('weapons.update');
 });
 
 Route::middleware('auth')->group(function () {

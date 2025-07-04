@@ -1,4 +1,4 @@
-import logo from '../Assets/logo.png';
+import logo from '../Assets/dlims.jpg';
 export default function ApplicationLogo() {
-    return <img src={logo} className="w-[60px]"></img>;
+    return <img src={logo} className="w-[100px]"></img>;
 }

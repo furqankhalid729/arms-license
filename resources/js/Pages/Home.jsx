@@ -1,16 +1,24 @@
-import { Head, useForm } from '@inertiajs/react';
-import { useState } from 'react';
-import dastak from '../Assets/dastak.jpeg';
-import dtu from '../Assets/dtu.jpeg';
-import logo from '../Assets/logo.png';
+import { Head, useForm, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
+import logo from '../Assets/dlims.jpg';
 
 export default function Home() {
-    const { data, setData, post, processing, errors, reset } = useForm({
-        cnic: '',
+    const { props } = usePage();
+    console.log('Page props:', props);
+    const initialCnic = props?.cnic || '';
+    const { data, setData, get, processing, errors, reset } = useForm({
+        cnic: initialCnic,
     });
 
     const [weapons, setWeapons] = useState([]);
     const [showResult, setShowResult] = useState(false);
+
+    useEffect(() => {
+        if (props.weapons) {
+            setWeapons(props.weapons);
+            setShowResult(true);
+        }
+    }, [props.weapons]);
 
     const formatCNIC = (value) => {
         let cnicValue = value.replace(/\D/g, '');
@@ -34,9 +42,11 @@ export default function Home() {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        post('/search-cnic', {
+        get('/search-cnic', {
             onSuccess: (response) => {
-                setWeapons(response.props.weapons || []);
+                console.log('Search response:', response.props.weapons);
+                setShowResult(true);
+                setWeapons(response.props.weapons);
                 setShowResult(true);
             },
             onError: (error) => {
@@ -48,16 +58,15 @@ export default function Home() {
     return (
         <>
             <Head title="Home" />
-            <div className="m-auto max-w-[500px] py-10">
-                <div className="flex items-center justify-between">
-                    <img src={logo} className="w-28" />
-                    <img src={dastak} className="w-28" />
+            <div className="m-auto max-w-[500px]">
+                <div className="items-left flex h-[270px] flex-col justify-around">
+                    <img src={logo} className="w-[200px] px-[20px]" />
+                    <h2 className="my-4 border bg-[#97edff] p-5 text-[30px] font-semibold">
+                        City Traffic Police
+                    </h2>
                 </div>
-                <h2 className="my-4 text-center text-base font-semibold sm:text-xl md:text-2xl">
-                    ARMS LICENSE VERIFICATION
-                </h2>
                 <div className="min-h-[61vh]">
-                    <div className="space-y-4 rounded-md bg-white p-6 shadow-lg">
+                    <div className="m-6 space-y-4 rounded-md bg-white p-6 shadow-lg">
                         <h3 className="text-center text-xs font-semibold sm:text-base">
                             Search By CNIC with dashes
                         </h3>
@@ -85,11 +94,10 @@ export default function Home() {
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className={`w-[92px] rounded-md py-2 text-white transition ${
-                                        processing
+                                    className={`w-[92px] rounded-md py-2 text-white transition ${processing
                                             ? 'cursor-not-allowed bg-gray-400'
                                             : 'bg-blue-500 hover:bg-blue-600'
-                                    }`}
+                                        }`}
                                 >
                                     {processing ? 'Searching...' : 'Search'}
                                 </button>
@@ -97,113 +105,108 @@ export default function Home() {
 
                             {showResult &&
                                 (weapons.length > 0 ? (
-                                    weapons.map((weapon, index) => (
-                                        <table
-                                            key={weapon.id || index}
-                                            className="my-3 flex w-full flex-col items-center justify-center space-y-2 rounded-lg border p-4 text-xs"
+                                    weapons.map((driver, index) => (
+                                        <div
+                                            key={index}
+                                            className="mx-auto max-w-md space-y-4 rounded-lg bg-white p-6 text-sm text-gray-800 shadow-lg"
                                         >
-                                            <tbody className="flex w-full flex-col items-center justify-center space-y-2 text-xs">
-                                                <tr className="flex w-full items-center border-b border-gray-300 pb-1">
-                                                    <td className="w-28 font-semibold">
-                                                        Applicant Image :
-                                                    </td>
-                                                    <td>
-                                                        <img
-                                                            src={`/storage/${weapon.applicant_image_url}`}
-                                                            alt="Applicant"
-                                                            className="h-20 w-20 object-center"
-                                                        />
-                                                    </td>
-                                                </tr>
-                                                <tr className="flex w-full items-center border-b border-gray-300 pb-1">
-                                                    <td className="w-28 font-semibold">
-                                                        Applicant Name :
-                                                    </td>
-                                                    <td>
-                                                        {weapon.applicant_name}
-                                                    </td>
-                                                </tr>
-                                                <tr className="flex w-full items-center border-b border-gray-300 pb-1">
-                                                    <td className="w-28 font-semibold">
-                                                        Father / Husband Name:
-                                                    </td>
-                                                    <td>
-                                                        {weapon.father_name}
-                                                    </td>
-                                                </tr>
-                                                <tr className="flex w-full items-center border-b border-gray-300 pb-1">
-                                                    <td className="w-28 font-semibold">
-                                                        License No. :
-                                                    </td>
-                                                    <td>{weapon.license_no}</td>
-                                                </tr>
-                                                <tr className="flex w-full items-center border-b border-gray-300 pb-1">
-                                                    <td className="w-28 font-semibold">
-                                                        Weapon Type :
-                                                    </td>
-                                                    <td>
-                                                        {weapon.weapon_type}
-                                                    </td>
-                                                </tr>
-                                                <tr className="flex w-full items-center border-b border-gray-300 pb-1">
-                                                    <td className="w-28 font-semibold">
-                                                        Caliber :
-                                                    </td>
-                                                    <td>
-                                                        {weapon.caliber ||
-                                                            '--------'}
-                                                    </td>
-                                                </tr>
-                                                <tr className="flex w-full items-center border-b border-gray-300 pb-1">
-                                                    <td className="w-28 font-semibold">
-                                                        Weapon No. :
-                                                    </td>
-                                                    <td>
-                                                        {weapon.weapon_no ||
-                                                            '--------'}
-                                                    </td>
-                                                </tr>
-                                                <tr className="flex w-full items-center border-b border-gray-300 pb-1">
-                                                    <td className="w-28 font-semibold">
-                                                        Cartridges :
-                                                    </td>
-                                                    <td>
-                                                        {weapon.cartridges ||
-                                                            '--------'}
-                                                    </td>
-                                                </tr>
-                                                <tr className="flex w-full items-center border-b border-gray-300 pb-1">
-                                                    <td className="w-28 font-semibold">
-                                                        Status :
-                                                    </td>
-                                                    <td>{weapon.status}</td>
-                                                </tr>
-                                                <tr className="flex w-full items-center border-b border-gray-300 pb-1">
-                                                    <td className="w-28 font-semibold">
-                                                        Issue Date :
-                                                    </td>
-                                                    <td>
-                                                        {new Date(
-                                                            weapon.issue_date,
-                                                        ).toLocaleDateString(
-                                                            'en-GB',
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                                <tr className="flex w-full items-center pb-1">
-                                                    <td className="w-28 font-semibold">
-                                                        Expiry Date :
-                                                    </td>
-                                                    <td>
-                                                        {new Date(
-                                                            weapon.expiry_date,
-                                                        ).toLocaleDateString(
-                                                            'en-GB',
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                                            {/* Applicant Image */}
+                                            <div className="flex justify-center">
+                                                <img
+                                                    src={`/storage/public/${driver.applicant_image}`}
+                                                    alt="Applicant"
+                                                    className="h-32 w-32 rounded-full border object-cover"
+                                                />
+                                            </div>
+
+                                            {/* Title */}
+                                            <h2 className="border-b pb-2 text-center text-lg font-semibold">
+                                                Driver Information
+                                            </h2>
+
+                                            {/* Info List */}
+                                            <div className="space-y-2">
+                                                <p>
+                                                    <span className="font-semibold">
+                                                        CNIC:
+                                                    </span>{' '}
+                                                    {driver.cnic}
+                                                </p>
+                                                <p>
+                                                    <span className="font-semibold">
+                                                        License Number:
+                                                    </span>{' '}
+                                                    {driver.license_number}
+                                                </p>
+                                                <p>
+                                                    <span className="font-semibold">
+                                                        Driver Name:
+                                                    </span>{' '}
+                                                    {driver.driver_name}
+                                                </p>
+                                                <p>
+                                                    <span className="font-semibold">
+                                                        Father/Husband Name:
+                                                    </span>{' '}
+                                                    {driver.father_name}
+                                                </p>
+                                                <p>
+                                                    <span className="font-semibold">
+                                                        Allowed Vehicles:
+                                                    </span>{' '}
+                                                    {driver.allowed_vehicles}
+                                                </p>
+                                                <p>
+                                                    <span className="font-semibold">
+                                                        State:
+                                                    </span>{' '}
+                                                    {driver.state}
+                                                </p>
+                                                <p>
+                                                    <span className="font-semibold">
+                                                        City:
+                                                    </span>{' '}
+                                                    {driver.city}
+                                                </p>
+                                            </div>
+
+                                            {/* License Duration */}
+                                            <h3 className="border-t pt-3 text-center font-semibold text-gray-600">
+                                                License Duration {index === 2 && '(International)'}
+                                            </h3>
+                                            <div className="space-y-1">
+                                                <p>
+                                                    <span className="font-semibold">
+                                                        Issue Date:
+                                                    </span>{' '}
+                                                    {new Date(
+                                                        driver.issue_date,
+                                                    ).toLocaleDateString(
+                                                        'en-GB',
+                                                    )}
+                                                </p>
+                                                <p>
+                                                    <span className="font-semibold">
+                                                        Valid From:
+                                                    </span>{' '}
+                                                    {new Date(
+                                                        driver.valid_from,
+                                                    ).toLocaleDateString(
+                                                        'en-GB',
+                                                    )}
+                                                </p>
+                                                <p>
+                                                    <span className="font-semibold">
+                                                        Valid To:
+                                                    </span>{' '}
+                                                    {new Date(
+                                                        driver.valid_to,
+                                                    ).toLocaleDateString(
+                                                        'en-GB',
+                                                    )}
+                                                </p>
+                                            </div>
+                                        </div>
                                     ))
                                 ) : (
                                     <p className="text-gray-600">
@@ -213,10 +216,28 @@ export default function Home() {
                         </div>
                     </div>
                 </div>
-
-                <div className="my-2 flex justify-end">
-                    <img src={dtu} className="w-28" />
-                </div>
+                <footer className="bg-gray-900 px-6 py-6 text-center text-white">
+                    <div className="mx-auto max-w-3xl text-sm leading-relaxed">
+                        <p>
+                            Driving License Issuance Management System (DLIMS)
+                            automates the processes for driving license
+                            issuance, renewal and upgrades. This system provides
+                            quick processing service to the public and up to
+                            date details to the authorities by using state of
+                            the art technology and equipment.
+                        </p>
+                        <p className="mt-4 text-xs text-gray-400">
+                            Copyright © 2024 -
+                            <a
+                                href="https://dlim-ctp.com"
+                                className="underline hover:text-white"
+                            >
+                                https://dlim-ctp.com
+                            </a>{' '}
+                            - All rights reserved
+                        </p>
+                    </div>
+                </footer>
             </div>
         </>
     );

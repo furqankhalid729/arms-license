@@ -8,6 +8,9 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Log;
+use App\Models\Driver;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class WeaponController extends Controller
 {
@@ -15,12 +18,12 @@ class WeaponController extends Controller
     {
         $search = $request->input('search');
 
-        $weapons = Weapon::when($search, function ($query, $search) {
-            return $query->where('applicant_name', 'like', "%{$search}%")
-                ->orWhere('cnic', 'like', "%{$search}%")
-                ->orWhere('license_no', 'like', "%{$search}%")
-                ->orWhere('weapon_type', 'like', "%{$search}%");
+        $weapons = Driver::when($search, function ($query, $search) {
+            return $query->where('driver_name', 'like', "%{$search}%")
+                ->orWhere('cnic', 'like', "%{$search}%");
         })->get();
+
+        Log::info('Searching for weapons with search query: ' . $search);
 
         return inertia('Dashboard', [
             'weapons' => $weapons,
@@ -35,70 +38,86 @@ class WeaponController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'applicant_name' => 'required|string',
-            'father_name' => 'required|string',
-            'cnic' => 'required | string',
-            'license_no' => 'required|string|unique:weapons',
-            'weapon_type' => 'required|string',
-            'caliber' => 'nullable|string',
-            'weapon_no' => 'nullable|string',
-            'cartridges' => 'nullable|string',
-            'status' => 'required|string',
-            'issue_date' => 'required|date',
-            'expiry_date' => 'required|date',
-            'applicant_image' => 'nullable|image',
+        $validated = $request->validate([
+            'driver_name'       => 'required|string|max:255',
+            'father_name'       => 'required|string|max:255',
+            'cnic'              => 'required|string',
+            'license_number'    => 'required|string|max:255',
+            'allowed_vehicles'  => 'required|string|max:255',
+            'state'             => 'required|string|max:255',
+            'city'              => 'required|string|max:255',
+            'license_type'      => 'nullable|string|max:255',
+            'issue_date'        => 'required|date',
+            'valid_from'        => 'required|date',
+            'valid_to'          => 'required|date|after_or_equal:valid_from',
+            'applicant_image'   => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        $imagePath = $request->file('applicant_image')->store('applicant_images', 'public');
+        Log::info('Storing driver license record: ' . json_encode($validated));
+        // Upload image
+        if ($request->hasFile('applicant_image')) {
+            $image = $request->file('applicant_image');
+            Log::info('Image file received: ' . $image->getClientOriginalName());
+            $filename = 'applicants/' . Str::uuid() . '.' . $image->getClientOriginalExtension();
+            $path = $image->storeAs('public', $filename);
+            $validated['applicant_image'] = $filename;
+        } else {
+            $validated['applicant_image'] = "test";
+        }
 
-        Weapon::create([
-            'applicant_name' => $request->applicant_name,
-            'father_name' => $request->father_name,
-            'cnic' => $request->cnic,
-            'license_no' => $request->license_no,
-            'weapon_type' => $request->weapon_type,
-            'status' => $request->status,
-            'caliber' => $request->caliber,
-            'cartridges' => $request->cartridges,
-            'weapon_no' => $request->weapon_no,
-            'issue_date' => $request->issue_date,
-            'expiry_date' => $request->expiry_date,
-            'applicant_image_url' => $imagePath,
+        Driver::create($validated);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Driver license record created successfully!',
+            'redirect' => route('dashboard') // optional
         ]);
-
-        return redirect()->route('dashboard')->with('success', 'Weapon added successfully');
     }
 
-    public function edit(Weapon $weapon)
+    public function edit($id)
     {
-        $weapon->makeHidden(['created_at', 'updated_at']);
-        return Inertia::render('Edit', ['weapon' => $weapon]);
+        $driver = Driver::findOrFail($id);
+        return Inertia::render('Edit', ['driver' => $driver]);
     }
 
-    public function update(Request $request, Weapon $weapon)
+    public function update(Request $request, $id)
     {
-        $request->validate([
-            'applicant_name' => 'required|string',
-            'father_name' => 'required|string',
-            'license_no' => 'required|string',
-            'weapon_type' => 'required|string',
-            'caliber' => 'nullable|string',
-            'weapon_no' => 'nullable|string',
-            'cartridges' => 'nullable|string',
-            'status' => 'required|string',
-            'issue_date' => 'required|date',
-            'expiry_date' => 'required|date',
-            'applicant_image' => 'nullable|image',
+        $validated = $request->validate([
+            'driver_name'       => 'required|string|max:255',
+            'father_name'       => 'required|string|max:255',
+            'cnic'              => 'required|string',
+            'license_number'    => 'required|string|max:255',
+            'allowed_vehicles'  => 'required|string|max:255',
+            'state'             => 'required|string|max:255',
+            'city'              => 'required|string|max:255',
+            'license_type'      => 'nullable|string|max:255',
+            'issue_date'        => 'required|date',
+            'valid_from'        => 'required|date',
+            'valid_to'          => 'required|date|after_or_equal:valid_from',
         ]);
 
-        $weapon->update($request->all());
-        return Redirect::route('dashboard')->with('success', 'Weapon record updated successfully');
+        Log::info('Updating driver license record: ' . json_encode($validated));
+        $driver = Driver::findOrFail($id);
+        // Handle image upload if new file is submitted
+        if ($request->hasFile('applicant_image')) {
+            $image = $request->file('applicant_image');
+            $filename = 'applicants/' . Str::uuid() . '.' . $image->getClientOriginalExtension();
+            $path = $image->storeAs('public', $filename);
+            $validated['applicant_image'] = $filename;
+
+            // Optional: delete old image if exists
+            if ($driver->applicant_image && Storage::exists('public/' . $driver->applicant_image)) {
+                Storage::delete('public/' . $driver->applicant_image);
+            }
+        }
+
+        $driver->update($validated);
+        return Redirect::route('dashboard')->with('success', 'Driver license record updated successfully!');
     }
 
     public function destroy($id)
     {
-        $weapon = Weapon::findOrFail($id);
+        $weapon = Driver::findOrFail($id);
         $weapon->delete();
         return redirect()->back()->with('success', 'Installer was successfully deleted');
     }
@@ -108,10 +127,11 @@ class WeaponController extends Controller
         $request->validate([
             'cnic' => 'required|string',
         ]);
-
-        $weapons = Weapon::where('cnic', $request->cnic)->get();
+        Log::info('Searching for weapons with CNIC: ' . $request->cnic);
+        $weapons = Driver::where('license_number', $request->cnic)->get();
 
         return Inertia::render('Home', [
+            'cnic' => $request->cnic,
             'weapons' => $weapons->isEmpty() ? [] : $weapons,
         ]);
     }
